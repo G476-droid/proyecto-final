@@ -5,6 +5,7 @@ import {
   ScrollView,
   KeyboardAvoidingView,
   Platform,
+  Alert,
 } from "react-native";
 import { StackScreenProps } from "@react-navigation/stack";
 import { AuthStackParamList } from "../../navigation/typeNavigation";
@@ -17,6 +18,7 @@ import { registerStyles } from "../../styles/appStyle";
 import { Input } from "../../components/ui/Input";
 import { Button } from "../../components/ui/Button";
 import { RegisterForm } from "../../types/auth";
+import { supabase } from "../../services/supabase";
 
 type RegisterScreenNavigationProp = StackScreenProps<
   AuthStackParamList,
@@ -51,15 +53,50 @@ export const RegisterScreen = ({
       setEmailError("Ingresa un email válido");
       valid = false;
     }
+
     if (!isValidPassword(registerForm.password)) {
       setPasswordError("Mínimo 6 caracteres");
       valid = false;
     }
+
     if (!passwordsMatch(registerForm.password, registerForm.confirmPassword)) {
       setConfirmError("Las contraseñas no coinciden");
       valid = false;
     }
+
     return valid;
+  };
+
+  const handleRegister = async () => {
+    if (!validate()) {
+      return;
+    }
+
+    try {
+      setLoading(true);
+
+      const { data, error } = await supabase.auth.signUp({
+        email: registerForm.email.trim(),
+        password: registerForm.password,
+      });
+
+
+      if (error) {
+        Alert.alert("Error al registrar", error.message);
+        return;
+      }
+
+      Alert.alert(
+        "Registro exitoso",
+        "Tu cuenta fue creada correctamente. Ahora inicia sesión."
+      );
+
+      navigation.navigate("Login");
+    } catch (error: any) {
+      Alert.alert("Error", error.message ?? "No se pudo registrar el usuario.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -86,6 +123,7 @@ export const RegisterScreen = ({
             autoCapitalize="none"
             error={emailError}
           />
+
           <Input
             label="Contraseña"
             placeholder="Mínimo 6 caracteres"
@@ -94,6 +132,7 @@ export const RegisterScreen = ({
             isPassword
             error={passwordError}
           />
+
           <Input
             label="Confirmar Contraseña"
             placeholder="Repite tu contraseña"
@@ -102,9 +141,10 @@ export const RegisterScreen = ({
             isPassword
             error={confirmError}
           />
+
           <Button
             title="Registrarse"
-            onPress={() => {}}
+            onPress={handleRegister}
             loading={loading}
             style={registerStyles.button}
           />

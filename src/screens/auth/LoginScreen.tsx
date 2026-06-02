@@ -1,8 +1,8 @@
 import React, { useState } from "react";
+import { supabase } from "../../services/supabase";
 import {
   View,
   Text,
-  StyleSheet,
   ScrollView,
   Alert,
   KeyboardAvoidingView,
@@ -41,11 +41,40 @@ export const LoginScreen = ({ navigation }: LoginScreenNavigationProp) => {
       setEmailError("Ingresa un email válido");
       valid = false;
     }
+
     if (!isValidPassword(loginForm.password)) {
       setPasswordError("La contraseña debe tener al menos 6 caracteres");
       valid = false;
     }
+
     return valid;
+  };
+
+  const handleLogin = async () => {
+    if (!validate()) {
+      return;
+    }
+
+    try {
+      setLoading(true);
+
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: loginForm.email.trim(),
+        password: loginForm.password,
+      });
+
+
+      if (error) {
+        Alert.alert("Error al iniciar sesión", error.message);
+        return;
+      }
+
+      Alert.alert("Bienvenido", "Inicio de sesión correcto.");
+    } catch (error: any) {
+      Alert.alert("Error", error.message ?? "No se pudo iniciar sesión.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -72,6 +101,7 @@ export const LoginScreen = ({ navigation }: LoginScreenNavigationProp) => {
             autoCapitalize="none"
             error={emailError}
           />
+
           <Input
             label="Contraseña"
             placeholder="Mínimo 6 caracteres"
@@ -80,11 +110,11 @@ export const LoginScreen = ({ navigation }: LoginScreenNavigationProp) => {
             isPassword
             error={passwordError}
           />
+
           <Button
             title="Iniciar Sesión"
-            onPress={()=>{}}
+            onPress={handleLogin}
             loading={loading}
-            style={loginStyles.button}
           />
         </View>
 

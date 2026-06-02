@@ -1,15 +1,27 @@
-import React from 'react';
-import { NavigationContainer } from '@react-navigation/native';
-import AuthStack from './AuthStack';
-import AppStack from './AppStack';
+import React from "react";
+import { View, Text } from "react-native";
+import AuthStack from "./AuthStack";
+import AppStack from "./AppStack";
+import { useAuth } from "../context/AuthContext";
 
-export const StackNavigator = () => {
+const StackNavigator = () => {
+  const { user, isLoading } = useAuth();
 
-  return (
-    <NavigationContainer>
-      {/*<AppStack />*/}
-      <AuthStack/>
-    </NavigationContainer>
-  );
+  if (isLoading) {
+    return (
+      <View
+        style={{
+          flex: 1,
+          justifyContent: "center",
+          alignItems: "center",
+        }}
+      >
+        <Text>Cargando...</Text>
+      </View>
+    );
+  }
+
+  return user ? <AppStack /> : <AuthStack />;
 };
 
+export default StackNavigator;
