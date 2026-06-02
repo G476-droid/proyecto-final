@@ -87,8 +87,6 @@ export const analyzeImageWithAI = async (imageUri: string): Promise<{
   },
 });
 
-console.log("DATA EDGE FUNCTION:", data);
-console.log("ERROR EDGE FUNCTION:", error);
 
 if (error) {
   throw new Error(error.message ?? "Error llamando a la función de IA.");

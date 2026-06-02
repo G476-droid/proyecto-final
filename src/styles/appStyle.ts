@@ -165,37 +165,73 @@ export const buttonStyles = StyleSheet.create({
 
 export const cardStyles = StyleSheet.create({
   card: {
+    flexDirection: "row",
     backgroundColor: "#FFFFFF",
     borderRadius: 16,
-    padding: 16,
-    marginBottom: 12,
+    marginBottom: 14,
+    overflow: "hidden",
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.08,
-    shadowRadius: 8,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 2 },
     elevation: 3,
   },
-  header: {
+  image: {
+    width: 120,
+    height: 120,
+    backgroundColor: "#E5E7EB",
+  },
+  content: {
+    flex: 1,
+    padding: 12,
+    justifyContent: "space-between",
+  },
+  topRow: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginBottom: 10,
+    alignItems: "center",
   },
   badge: {
     backgroundColor: "#EEF2FF",
-    borderRadius: 8,
-    paddingHorizontal: 10,
+    paddingHorizontal: 8,
     paddingVertical: 4,
+    borderRadius: 8,
   },
-  badgeText: { fontSize: 12, fontWeight: "700", color: "#4F46E5" },
-  userId: { fontSize: 12, color: "#718096" },
-  title: {
-    fontSize: 15,
+  badgeText: {
+    color: "#4F46E5",
     fontWeight: "700",
-    color: "#1A202C",
-    marginBottom: 8,
-    textTransform: "capitalize",
+    fontSize: 12,
   },
-  body: { fontSize: 13, color: "#718096", lineHeight: 20 },
+  userId: {
+    fontSize: 12,
+    color: "#6B7280",
+    fontWeight: "600",
+  },
+  title: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: "#111827",
+    marginTop: 8,
+    marginBottom: 6,
+  },
+  body: {
+    fontSize: 14,
+    color: "#4B5563",
+    lineHeight: 20,
+    marginBottom: 8,
+  },
+  footer: {
+    flexDirection: "row",
+    gap: 14,
+    marginTop: 6,
+  },
+  footerText: {
+    fontSize: 13,
+    color: "#374151",
+    fontWeight: "600",
+  },
 });
 
 export const inputStyles = StyleSheet.create({

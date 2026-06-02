@@ -5,7 +5,6 @@ import {
   FlatList,
   TouchableOpacity,
   ActivityIndicator,
-  Image,
   RefreshControl,
   Alert,
 } from "react-native";
@@ -53,6 +52,15 @@ export const HomeScreen = ({ navigation }: HomeScreenNavigationProp) => {
     await supabase.auth.signOut();
   };
 
+  const goToDetail = (item: Species) => {
+    navigation.navigate("Detail", {
+      id: item.id,
+      title: item.common_name ?? "Sin nombre",
+      description: item.description ?? "",
+      name: item.common_name ?? "Sin nombre",
+    });
+  };
+
   return (
     <View style={homeStyles.container}>
       <View style={homeStyles.header}>
@@ -89,57 +97,32 @@ export const HomeScreen = ({ navigation }: HomeScreenNavigationProp) => {
               <Text style={{ fontWeight: "bold", fontSize: 18 }}>
                 No hay especies registradas
               </Text>
-              <Text style={{ marginTop: 6, color: "#6B7280", textAlign: "center" }}>
-                Presiona “Capturar especie” para guardar tu primera planta en Supabase.
+              <Text
+                style={{
+                  marginTop: 6,
+                  color: "#6B7280",
+                  textAlign: "center",
+                }}
+              >
+                Presiona “Capturar especie” para guardar tu primera planta en
+                Supabase.
               </Text>
             </View>
           }
           renderItem={({ item }) => (
-            <TouchableOpacity
-              onPress={() =>
-                navigation.navigate("Detail", {
-                  id: item.id,
-                  title: item.common_name ?? "Sin nombre",
-                  description: item.description ?? "",
-                  name: item.common_name ?? "Sin nombre",
-                })
+            <Card
+              id={item.id}
+              title={item.common_name ?? "Sin nombre"}
+              body={
+                item.description ??
+                item.scientific_name ??
+                "Sin descripción registrada."
               }
-            >
-              {item.image_url && (
-                <Image
-                  source={{ uri: item.image_url }}
-                  style={{
-                    width: "100%",
-                    height: 180,
-                    borderRadius: 14,
-                    marginBottom: 8,
-                  }}
-                />
-              )}
-
-              <Card
-                id={item.id.substring(0, 4)}
-                title={item.common_name ?? "Sin nombre"}
-                body={
-                  item.description ??
-                  item.scientific_name ??
-                  "Sin descripción registrada."
-                }
-                onPress={() =>
-                  navigation.navigate("Detail", {
-                    id: item.id,
-                    title: item.common_name ?? "Sin nombre",
-                    description: item.description ?? "",
-                    name: item.common_name ?? "Sin nombre",
-                  })
-                }
-              />
-
-              <Text style={{ marginLeft: 8, marginBottom: 4, color: "#4B5563" }}>
-                🌡 {item.temperature ?? "Sin temperatura"} | 🌤{" "}
-                {item.weather ?? "Sin clima"}
-              </Text>
-            </TouchableOpacity>
+              imageUrl={item.image_url}
+              temperature={item.temperature}
+              weather={item.weather}
+              onPress={() => goToDetail(item)}
+            />
           )}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={homeStyles.list}
