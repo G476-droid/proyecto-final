@@ -7,6 +7,7 @@ import {
   Alert,
   KeyboardAvoidingView,
   Platform,
+  Image,
 } from "react-native";
 import { StackScreenProps } from "@react-navigation/stack";
 import { AuthStackParamList } from "../../navigation/typeNavigation";
@@ -38,12 +39,12 @@ export const LoginScreen = ({ navigation }: LoginScreenNavigationProp) => {
     setPasswordError("");
 
     if (!isValidEmail(loginForm.email)) {
-      setEmailError("Ingresa un email válido");
+      setEmailError("Ingresa un email valido");
       valid = false;
     }
 
     if (!isValidPassword(loginForm.password)) {
-      setPasswordError("La contraseña debe tener al menos 6 caracteres");
+      setPasswordError("La contrasena debe tener al menos 6 caracteres");
       valid = false;
     }
 
@@ -58,20 +59,19 @@ export const LoginScreen = ({ navigation }: LoginScreenNavigationProp) => {
     try {
       setLoading(true);
 
-      const { data, error } = await supabase.auth.signInWithPassword({
+      const { error } = await supabase.auth.signInWithPassword({
         email: loginForm.email.trim(),
         password: loginForm.password,
       });
 
-
       if (error) {
-        Alert.alert("Error al iniciar sesión", error.message);
+        Alert.alert("Error al iniciar sesion", error.message);
         return;
       }
 
-      Alert.alert("Bienvenido", "Inicio de sesión correcto.");
+      Alert.alert("Bienvenido", "Inicio de sesion correcto.");
     } catch (error: any) {
-      Alert.alert("Error", error.message ?? "No se pudo iniciar sesión.");
+      Alert.alert("Error", error.message ?? "No se pudo iniciar sesion.");
     } finally {
       setLoading(false);
     }
@@ -86,46 +86,66 @@ export const LoginScreen = ({ navigation }: LoginScreenNavigationProp) => {
         contentContainerStyle={loginStyles.container}
         keyboardShouldPersistTaps="handled"
       >
-        <View style={loginStyles.header}>
-          <Text style={loginStyles.title}>Bienvenido</Text>
-          <Text style={loginStyles.subtitle}>Inicia sesión para continuar</Text>
-        </View>
+        <View style={loginStyles.shell}>
+          <View style={loginStyles.brandCard}>
+            <View style={loginStyles.header}>
+              <View style={loginStyles.logoWrap}>
+                <Image
+                  source={require("../../../assets/img/logo.png")}
+                  style={loginStyles.logo}
+                  resizeMode="contain"
+                />
+              </View>
+              <Text style={loginStyles.eyebrow}>EcoScan IA</Text>
+              <Text style={loginStyles.title}>Bienvenido</Text>
+              <Text style={loginStyles.subtitle}>
+                Inicia sesion para continuar con el registro y consulta de especies.
+              </Text>
+            </View>
+          </View>
 
-        <View style={loginStyles.form}>
-          <Input
-            label="Correo electrónico"
-            placeholder="ejemplo@correo.com"
-            value={loginForm.email}
-            onChangeText={(value) => handleInputChange("email", value)}
-            keyboardType="email-address"
-            autoCapitalize="none"
-            error={emailError}
-          />
+          <View style={loginStyles.form}>
+            <Text style={loginStyles.formTitle}>Accede a tu cuenta</Text>
+            <Text style={loginStyles.formSubtitle}>
+              Usa tu correo registrado para entrar al panel principal.
+            </Text>
 
-          <Input
-            label="Contraseña"
-            placeholder="Mínimo 6 caracteres"
-            value={loginForm.password}
-            onChangeText={(value) => handleInputChange("password", value)}
-            isPassword
-            error={passwordError}
-          />
+            <Input
+              label="Correo electronico"
+              placeholder="ejemplo@correo.com"
+              value={loginForm.email}
+              onChangeText={(value) => handleInputChange("email", value)}
+              keyboardType="email-address"
+              autoCapitalize="none"
+              error={emailError}
+            />
 
-          <Button
-            title="Iniciar Sesión"
-            onPress={handleLogin}
-            loading={loading}
-          />
-        </View>
+            <Input
+              label="Contrasena"
+              placeholder="Minimo 6 caracteres"
+              value={loginForm.password}
+              onChangeText={(value) => handleInputChange("password", value)}
+              isPassword
+              error={passwordError}
+            />
 
-        <View style={loginStyles.footer}>
-          <Text style={loginStyles.footerText}>¿No tienes cuenta? </Text>
-          <Text
-            style={loginStyles.link}
-            onPress={() => navigation.navigate("Register")}
-          >
-            Regístrate
-          </Text>
+            <Button
+              title="Iniciar sesion"
+              onPress={handleLogin}
+              loading={loading}
+              style={loginStyles.button}
+            />
+          </View>
+
+          <View style={loginStyles.footer}>
+            <Text style={loginStyles.footerText}>No tienes cuenta? </Text>
+            <Text
+              style={loginStyles.link}
+              onPress={() => navigation.navigate("Register")}
+            >
+              Registrate
+            </Text>
+          </View>
         </View>
       </ScrollView>
     </KeyboardAvoidingView>

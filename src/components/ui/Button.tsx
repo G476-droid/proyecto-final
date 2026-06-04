@@ -29,17 +29,17 @@ export const Button = ({
   textStyle,
 }: ButtonProps) => {
   const getBackgroundColor = () => {
-    if (disabled || loading) return '#A0AEC0';
+    if (disabled || loading) return '#A8B8AF';
     switch (variant) {
-      case 'primary': return '#4F46E5';
-      case 'secondary': return '#E2E8F0';
-      case 'danger': return '#E53E3E';
-      default: return '#4F46E5';
+      case 'primary': return '#103B2D';
+      case 'secondary': return '#E8F0EB';
+      case 'danger': return '#C4493A';
+      default: return '#103B2D';
     }
   };
 
   const getTextColor = () => {
-    if (variant === 'secondary') return '#4A5568';
+    if (variant === 'secondary') return '#355447';
     return '#FFFFFF';
   };
 

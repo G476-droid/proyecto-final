@@ -32,6 +32,12 @@ export const Card = ({
   onEdit,
   onDelete,
 }: CardProps) => {
+  const location = province
+    ? `${province}${city ? `, ${city}` : ""}`
+    : country
+    ? country
+    : "Ubicacion no registrada";
+
   return (
     <Pressable style={cardStyles.card} onPress={onPress}>
       <View style={cardStyles.imageBox}>
@@ -49,41 +55,47 @@ export const Card = ({
       </View>
 
       <View style={cardStyles.content}>
-        <Text style={cardStyles.title} numberOfLines={1}>
-          {title}
-        </Text>
+        <View>
+          <View style={cardStyles.topMetaRow}>
+            <Text style={cardStyles.badge}>Registro</Text>
+            <Text style={cardStyles.climate}>
+              {weather ?? "Sin clima"}
+            </Text>
+          </View>
 
-        <Text style={cardStyles.scientific} numberOfLines={1}>
-          {weather ?? "Sin clima"}
-        </Text>
+          <Text style={cardStyles.title} numberOfLines={1}>
+            {title}
+          </Text>
 
-        <Text style={cardStyles.body} numberOfLines={2}>
-          {body}
-        </Text>
+          <Text style={cardStyles.scientific} numberOfLines={1}>
+            {temperature ? `${temperature} °C` : "Temperatura no registrada"}
+          </Text>
 
-        <Text style={cardStyles.location} numberOfLines={1}>
-          📍{" "}
-          {province
-            ? `${province}${city ? `, ${city}` : ""}`
-            : country
-            ? country
-            : "Ubicación no registrada"}
-        </Text>
+          <Text style={cardStyles.body} numberOfLines={2}>
+            {body}
+          </Text>
 
-        <Text style={cardStyles.meta} numberOfLines={1}>
-          🌡 {temperature ?? "--"} · {weather ?? "Sin clima"}
-        </Text>
+          <Text style={cardStyles.location} numberOfLines={1}>
+            {location}
+          </Text>
+        </View>
 
-        <View style={cardStyles.actionsBottom}>
-          <Pressable
-            style={cardStyles.mapMiniBtn}
-            onPress={(e: any) => {
-              e.stopPropagation?.();
-              onMap?.();
-            }}
-          >
-            <Text style={cardStyles.mapMiniText}>🗺 Mapa</Text>
-          </Pressable>
+        <View style={cardStyles.bottomRow}>
+          <View style={cardStyles.actionsBottom}>
+            <Pressable
+              style={cardStyles.mapMiniBtn}
+              onPress={(e: any) => {
+                e.stopPropagation?.();
+                onMap?.();
+              }}
+            >
+              <Text style={cardStyles.mapMiniText}>Ver mapa</Text>
+            </Pressable>
+          </View>
+
+          <Text style={cardStyles.meta} numberOfLines={1}>
+            {weather ?? "Sin clima"} · {temperature ?? "--"}
+          </Text>
         </View>
       </View>
 
