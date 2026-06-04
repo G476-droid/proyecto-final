@@ -11,6 +11,9 @@ export type Species = {
   longitude: number | null;
   weather: string | null;
   temperature: string | null;
+  country: string | null;
+  province: string | null;
+  city: string | null;
   created_at: string;
 };
 
@@ -110,6 +113,9 @@ export const saveSpeciesToDatabase = async ({
   imageUrl,
   latitude,
   longitude,
+  country,
+  province,
+  city,
   weather = "Templado",
   temperature = "22°C",
 }: {
@@ -119,6 +125,9 @@ export const saveSpeciesToDatabase = async ({
   imageUrl: string | null;
   latitude: number | null;
   longitude: number | null;
+  country?: string | null;
+  province?: string | null;
+  city?: string | null;
   weather?: string;
   temperature?: string;
 }) => {
@@ -137,9 +146,24 @@ export const saveSpeciesToDatabase = async ({
     image_url: imageUrl,
     latitude,
     longitude,
+    country,
+    province,
+    city,
     weather,
     temperature,
   });
+
+  if (error) {
+    throw error;
+  }
+};
+
+
+ export const deleteSpecies = async (id: string) => {
+  const { error } = await supabase
+    .from("species")
+    .delete()
+    .eq("id", id);
 
   if (error) {
     throw error;

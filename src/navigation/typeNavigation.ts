@@ -1,3 +1,5 @@
+import { Species } from "../services/speciesService";
+
 export type AuthStackParamList = {
   Login: undefined;
   Register: undefined;
@@ -6,14 +8,13 @@ export type AuthStackParamList = {
 export type AppStackParamList = {
   Home: undefined;
 
+  CreateSpecies: undefined;
+
   Detail: {
-    id?: string;
-    title?: string;
-    description?: string;
-    name?: string;
+    species: Species;
   };
 
-  CreateSpecies: undefined;
   Map: undefined;
+
   Profile: undefined;
 };

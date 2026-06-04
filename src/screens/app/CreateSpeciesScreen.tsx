@@ -1,71 +1,98 @@
 import React, { useState } from "react";
 import {
+  View,
   Text,
   TouchableOpacity,
   Alert,
   StyleSheet,
   ActivityIndicator,
-  TextInput,
   Image,
-  ScrollView,
-  View,
+  Platform,
 } from "react-native";
+import { StackScreenProps } from "@react-navigation/stack";
 import * as ImagePicker from "expo-image-picker";
 import * as Location from "expo-location";
+
+import { AppStackParamList } from "../../navigation/typeNavigation";
 import {
   analyzeImageWithAI,
   saveSpeciesToDatabase,
 } from "../../services/speciesService";
 
-const CreateSpeciesScreen = () => {
-  const [commonName, setCommonName] = useState("");
-  const [scientificName, setScientificName] = useState("");
-  const [description, setDescription] = useState("");
+type Props = StackScreenProps<AppStackParamList, "CreateSpecies">;
 
+const CreateSpeciesScreen = ({ navigation }: Props) => {
   const [imageUri, setImageUri] = useState<string | null>(null);
-  const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [statusText, setStatusText] = useState(
+    "Primero captura o selecciona una imagen.",
+  );
 
-  const [latitude, setLatitude] = useState<number | null>(null);
-  const [longitude, setLongitude] = useState<number | null>(null);
+  const getCurrentLocationData = async () => {
+    const permission = await Location.requestForegroundPermissionsAsync();
 
-  const [analyzing, setAnalyzing] = useState(false);
-  const [saving, setSaving] = useState(false);
+    if (!permission.granted) {
+      return {
+        latitude: null,
+        longitude: null,
+        country: null,
+        province: null,
+        city: null,
+      };
+    }
 
-const analyzeSelectedImage = async (uri: string) => {
-  try {
-    setAnalyzing(true);
+    const location = await Location.getCurrentPositionAsync({
+      accuracy: Location.Accuracy.High,
+    });
 
-    console.log("Imagen seleccionada:", uri);
-    console.log("Enviando imagen a IA...");
+    let latitude = location.coords.latitude;
+    let longitude = location.coords.longitude;
 
-    const result = await analyzeImageWithAI(uri);
+    if (longitude > 180) longitude = longitude - 360;
+    if (longitude < -180) longitude = longitude + 360;
 
-    console.log("RESULTADO IA:", result);
+    let country: string | null = null;
+    let province: string | null = null;
+    let city: string | null = null;
 
-    setImageUrl(result.imageUrl);
-    setCommonName(result.aiResult.commonName);
-    setScientificName(result.aiResult.scientificName);
-    setDescription(
-      `${result.aiResult.description}\n\nCuidados: ${result.aiResult.care}\n\nConfianza IA: ${result.aiResult.confidence}`
-    );
+    try {
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${latitude}&lon=${longitude}`,
+      );
 
-    Alert.alert(
-      "IA completada",
-      "La imagen fue analizada y los campos fueron llenados automáticamente."
-    );
-  } catch (error: any) {
-    console.log("ERROR IA COMPLETO:", error);
+      const data = await response.json();
+      const address = data.address || {};
 
-    Alert.alert(
-      "Error IA",
-      error.message ?? JSON.stringify(error)
-    );
-  } finally {
-    setAnalyzing(false);
-  }
-};
+      country = address.country ?? null;
 
-  const pickImage = async () => {
+      province =
+        address.state ??
+        address.province ??
+        address.region ??
+        address.county ??
+        null;
+
+      city =
+        address.city ??
+        address.town ??
+        address.village ??
+        address.municipality ??
+        address.suburb ??
+        null;
+    } catch (error) {
+      console.log("No se pudo obtener país/provincia:", error);
+    }
+
+    return {
+      latitude,
+      longitude,
+      country,
+      province,
+      city,
+    };
+  };
+
+  const openGallery = async () => {
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
 
     if (!permission.granted) {
@@ -76,267 +103,340 @@ const analyzeSelectedImage = async (uri: string) => {
     const result = await ImagePicker.launchImageLibraryAsync({
       quality: 0.8,
       allowsEditing: true,
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
     });
 
     if (!result.canceled) {
-      const uri = result.assets[0].uri;
-      setImageUri(uri);
-
-      setCommonName("");
-      setScientificName("");
-      setDescription("");
-      setImageUrl(null);
-
-      await analyzeSelectedImage(uri);
+      setImageUri(result.assets[0].uri);
+      setStatusText("Imagen lista. Ahora presiona Guardar especie.");
     }
   };
 
-  const takePhoto = async () => {
-    const permission = await ImagePicker.requestCameraPermissionsAsync();
-
-    if (!permission.granted) {
-      Alert.alert("Permiso requerido", "Debes permitir el uso de la cámara.");
-      return;
-    }
-
-    const result = await ImagePicker.launchCameraAsync({
-      quality: 0.8,
-      allowsEditing: true,
-    });
-
-    if (!result.canceled) {
-      const uri = result.assets[0].uri;
-      setImageUri(uri);
-
-      setCommonName("");
-      setScientificName("");
-      setDescription("");
-      setImageUrl(null);
-
-      await analyzeSelectedImage(uri);
-    }
-  };
-
-  const getLocation = async () => {
-    const permission = await Location.requestForegroundPermissionsAsync();
-
-    if (!permission.granted) {
-      Alert.alert("Permiso requerido", "Debes permitir el uso de ubicación.");
-      return;
-    }
-
-    const location = await Location.getCurrentPositionAsync({});
-    setLatitude(location.coords.latitude);
-    setLongitude(location.coords.longitude);
-
-    Alert.alert("Ubicación obtenida", "Latitud y longitud guardadas.");
-  };
-
-  const saveSpecies = async () => {
-    if (!commonName.trim()) {
-      Alert.alert("Falta IA", "Primero toma o selecciona una imagen para analizar.");
-      return;
-    }
-
-    if (!imageUrl) {
-      Alert.alert("Falta imagen", "Primero analiza una imagen con IA.");
-      return;
-    }
-
+  const processImage = async (uri: string) => {
     try {
-      setSaving(true);
+      setLoading(true);
 
+      setStatusText("Obteniendo ubicación...");
+      const locationData = await getCurrentLocationData();
+
+      setStatusText("Analizando planta con IA...");
+      const result = await analyzeImageWithAI(uri);
+      const ai = result.aiResult;
+
+      setStatusText("Guardando especie en Supabase...");
       await saveSpeciesToDatabase({
-        commonName: commonName.trim(),
-        scientificName: scientificName.trim(),
-        description: description.trim(),
-        imageUrl,
-        latitude,
-        longitude,
+        commonName: ai.commonName,
+        scientificName: ai.scientificName,
+        description: `${ai.description}\n\nCuidados: ${ai.care}\n\nConfianza IA: ${ai.confidence}`,
+        imageUrl: result.imageUrl,
+        latitude: locationData.latitude,
+        longitude: locationData.longitude,
+        country: locationData.country,
+        province: locationData.province,
+        city: locationData.city,
         weather: "Templado",
         temperature: "22°C",
       });
 
-      Alert.alert("Guardado", "La especie fue guardada correctamente.");
+      Alert.alert(
+  "Especie guardada",
+  `Nombre: ${ai.commonName}\nProvincia: ${
+    locationData.province ?? "No identificada"
+  }`
+);
 
-      setCommonName("");
-      setScientificName("");
-      setDescription("");
-      setImageUri(null);
-      setImageUrl(null);
-      setLatitude(null);
-      setLongitude(null);
+navigation.goBack();
+
     } catch (error: any) {
-      Alert.alert("Error", error.message ?? "No se pudo guardar la especie.");
+      console.log("ERROR REGISTRANDO ESPECIE:", error);
+
+      Alert.alert(
+        "Error",
+        error.message ??
+          "No se pudo analizar o guardar la especie. Revisa la IA o Supabase.",
+      );
     } finally {
-      setSaving(false);
+      setLoading(false);
+      setStatusText("Puedes capturar otra imagen.");
     }
   };
 
+  const saveSpecies = async () => {
+    if (!imageUri) {
+      Alert.alert("Falta imagen", "Primero presiona Capturar imagen.");
+      return;
+    }
+
+    await processImage(imageUri);
+  };
+
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      <Text style={styles.title}>Registrar especie</Text>
+    <View style={styles.screen}>
+      <View style={styles.hero}>
+        <Text style={styles.title}>Escanear planta</Text>
+      </View>
 
-      <Text style={styles.subtitle}>
-        Toma o selecciona una foto. La IA llenará automáticamente los datos.
-      </Text>
-
-      <TextInput
-        style={styles.input}
-        placeholder="Nombre común generado por IA"
-        value={commonName}
-        onChangeText={setCommonName}
-      />
-
-      <TextInput
-        style={styles.input}
-        placeholder="Nombre científico generado por IA"
-        value={scientificName}
-        onChangeText={setScientificName}
-      />
-
-      <TextInput
-        style={[styles.input, styles.textArea]}
-        placeholder="Descripción generada por IA"
-        value={description}
-        onChangeText={setDescription}
-        multiline
-      />
-
-      <TouchableOpacity
-        style={styles.button}
-        onPress={pickImage}
-        disabled={analyzing || saving}
-      >
-        <Text style={styles.buttonText}>🖼 Seleccionar imagen</Text>
-      </TouchableOpacity>
-
-      <TouchableOpacity
-        style={styles.button}
-        onPress={takePhoto}
-        disabled={analyzing || saving}
-      >
-        <Text style={styles.buttonText}>📷 Tomar foto</Text>
-      </TouchableOpacity>
-
-      {imageUri && <Image source={{ uri: imageUri }} style={styles.image} />}
-
-      {analyzing && (
-        <View style={styles.loadingBox}>
-          <ActivityIndicator color="#2E7D32" size="large" />
-          <Text style={styles.loadingText}>
-            Analizando imagen con IA...
-          </Text>
-        </View>
-      )}
-
-      <TouchableOpacity
-        style={styles.locationButton}
-        onPress={getLocation}
-        disabled={analyzing || saving}
-      >
-        <Text style={styles.buttonText}>📍 Obtener ubicación</Text>
-      </TouchableOpacity>
-
-      {latitude !== null && longitude !== null && (
-        <View style={styles.locationBox}>
-          <Text>Latitud: {latitude}</Text>
-          <Text>Longitud: {longitude}</Text>
-        </View>
-      )}
-
-      <TouchableOpacity
-        style={styles.saveButton}
-        onPress={saveSpecies}
-        disabled={analyzing || saving}
-      >
-        {saving ? (
-          <ActivityIndicator color="#FFFFFF" />
+      <View style={styles.scanCard}>
+        {imageUri ? (
+          <Image source={{ uri: imageUri }} style={styles.previewImage} />
         ) : (
-          <Text style={styles.buttonText}>Guardar especie</Text>
+          <View style={styles.plantArea}>
+            <View style={styles.scanFrame}>
+              <View style={[styles.corner, styles.topLeft]} />
+              <View style={[styles.corner, styles.topRight]} />
+              <View style={[styles.corner, styles.bottomLeft]} />
+              <View style={[styles.corner, styles.bottomRight]} />
+
+              <View style={styles.circleGlow}>
+                <Text style={styles.plantIcon}>🌿</Text>
+              </View>
+            </View>
+          </View>
         )}
+
+        {loading && (
+          <View style={styles.loadingOverlay}>
+            <ActivityIndicator size="large" color="#FFFFFF" />
+            <Text style={styles.loadingOverlayText}>{statusText}</Text>
+          </View>
+        )}
+      </View>
+
+      <TouchableOpacity
+        style={styles.captureButton}
+        onPress={openGallery}
+        disabled={loading}
+      >
+        <Text style={styles.captureButtonText}>📷 Capturar imagen</Text>
       </TouchableOpacity>
-    </ScrollView>
+
+      <TouchableOpacity
+        style={[
+          styles.saveButton,
+          (!imageUri || loading) && styles.saveButtonDisabled,
+        ]}
+        onPress={saveSpecies}
+        disabled={!imageUri || loading}
+      >
+        <Text style={styles.saveButtonText}>Guardar especie</Text>
+      </TouchableOpacity>
+
+      <View style={styles.statusBox}>
+        {loading ? (
+          <>
+            <ActivityIndicator size="small" color="#0F5D2F" />
+            <Text style={styles.statusText}>{statusText}</Text>
+          </>
+        ) : (
+          <>
+            <Text style={styles.statusIcon}>📸</Text>
+            <Text style={styles.statusText}>{statusText}</Text>
+          </>
+        )}
+      </View>
+    </View>
   );
 };
 
 export default CreateSpeciesScreen;
 
 const styles = StyleSheet.create({
-  container: {
-    flexGrow: 1,
+  screen: {
+    flex: 1,
+    backgroundColor: "#EEF7EA",
     padding: 24,
-    backgroundColor: "#F1F8E9",
+    alignItems: "center",
   },
+
+  hero: {
+    width: "100%",
+    alignItems: "center",
+    marginBottom: 18,
+  },
+
   title: {
     fontSize: 30,
-    fontWeight: "bold",
-    color: "#2E7D32",
-    textAlign: "center",
-    marginBottom: 8,
-  },
-  subtitle: {
-    textAlign: "center",
-    color: "#4B5563",
-    marginBottom: 16,
-  },
-  input: {
-    backgroundColor: "#FFFFFF",
-    borderWidth: 1,
-    borderColor: "#D1D5DB",
-    padding: 14,
-    borderRadius: 12,
-    marginBottom: 12,
-  },
-  textArea: {
-    minHeight: 110,
-    textAlignVertical: "top",
-  },
-  button: {
-    backgroundColor: "#2E7D32",
-    padding: 15,
-    borderRadius: 12,
-    marginBottom: 12,
-  },
-  locationButton: {
-    backgroundColor: "#1565C0",
-    padding: 15,
-    borderRadius: 12,
-    marginBottom: 12,
-  },
-  saveButton: {
-    backgroundColor: "#4F46E5",
-    padding: 15,
-    borderRadius: 12,
+    fontWeight: "900",
+    color: "#0F3D24",
     marginTop: 10,
   },
-  buttonText: {
-    color: "#FFFFFF",
-    textAlign: "center",
-    fontWeight: "bold",
-  },
-  image: {
-    width: "100%",
-    height: 240,
-    borderRadius: 14,
-    marginBottom: 12,
-  },
-  loadingBox: {
-    backgroundColor: "#FFFFFF",
-    padding: 16,
-    borderRadius: 12,
-    alignItems: "center",
-    marginBottom: 12,
-  },
-  loadingText: {
+
+  subtitle: {
     marginTop: 8,
-    color: "#2E7D32",
-    fontWeight: "bold",
+    fontSize: 14,
+    color: "#4B5563",
+    textAlign: "center",
+    maxWidth: 520,
+    lineHeight: 20,
   },
-  locationBox: {
+
+  scanCard: {
+    width: Platform.OS === "web" ? 360 : "92%",
+    height: 280,
+    borderRadius: 18,
+    overflow: "hidden",
+    backgroundColor: "#123D25",
+    shadowColor: "#000",
+    shadowOpacity: 0.25,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 8,
+    position: "relative",
+  },
+
+  plantArea: {
+    flex: 1,
+    backgroundColor: "#143D25",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+
+  previewImage: {
+    width: "100%",
+    height: "100%",
+  },
+
+  scanFrame: {
+    width: 160,
+    height: 160,
+    justifyContent: "center",
+    alignItems: "center",
+    position: "relative",
+  },
+
+  circleGlow: {
+    width: 125,
+    height: 125,
+    borderRadius: 70,
+    backgroundColor: "rgba(255,255,255,0.22)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+
+  plantIcon: {
+    fontSize: 70,
+  },
+
+  corner: {
+    position: "absolute",
+    width: 32,
+    height: 32,
+    borderColor: "#FFFFFF",
+  },
+
+  topLeft: {
+    top: 0,
+    left: 0,
+    borderTopWidth: 4,
+    borderLeftWidth: 4,
+    borderTopLeftRadius: 6,
+  },
+
+  topRight: {
+    top: 0,
+    right: 0,
+    borderTopWidth: 4,
+    borderRightWidth: 4,
+    borderTopRightRadius: 6,
+  },
+
+  bottomLeft: {
+    bottom: 0,
+    left: 0,
+    borderBottomWidth: 4,
+    borderLeftWidth: 4,
+    borderBottomLeftRadius: 6,
+  },
+
+  bottomRight: {
+    bottom: 0,
+    right: 0,
+    borderBottomWidth: 4,
+    borderRightWidth: 4,
+    borderBottomRightRadius: 6,
+  },
+
+  captureButton: {
+    width: Platform.OS === "web" ? 360 : "92%",
+    backgroundColor: "#0F5D2F",
+    paddingVertical: 15,
+    borderRadius: 16,
+    alignItems: "center",
+    marginTop: 18,
+  },
+
+  captureButtonText: {
+    color: "#FFFFFF",
+    fontWeight: "900",
+    fontSize: 16,
+  },
+
+  saveButton: {
+    width: Platform.OS === "web" ? 360 : "92%",
+    backgroundColor: "#4F46E5",
+    paddingVertical: 15,
+    borderRadius: 16,
+    alignItems: "center",
+    marginTop: 12,
+  },
+
+  saveButtonDisabled: {
+    backgroundColor: "#A5B4FC",
+  },
+
+  saveButtonText: {
+    color: "#FFFFFF",
+    fontWeight: "900",
+    fontSize: 16,
+  },
+
+  loadingOverlay: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: "rgba(15, 61, 36, 0.78)",
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 24,
+  },
+
+  loadingOverlayText: {
+    marginTop: 14,
+    color: "#FFFFFF",
+    fontWeight: "800",
+    textAlign: "center",
+  },
+
+  statusBox: {
+    marginTop: 16,
+    width: Platform.OS === "web" ? 360 : "92%",
     backgroundColor: "#FFFFFF",
     padding: 14,
-    borderRadius: 12,
-    marginBottom: 12,
+    borderRadius: 18,
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "#D1FAE5",
+  },
+
+  statusIcon: {
+    fontSize: 26,
+    marginBottom: 4,
+  },
+
+  statusText: {
+    color: "#0F3D24",
+    fontWeight: "800",
+    textAlign: "center",
+    marginTop: 6,
+  },
+
+  note: {
+    marginTop: 14,
+    color: "#6B7280",
+    fontSize: 13,
+    textAlign: "center",
+    maxWidth: 460,
   },
 });

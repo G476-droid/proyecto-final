@@ -66,6 +66,7 @@ export const homeStyles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: "#E2E8F0",
   },
+
   greeting: { fontSize: 20, fontWeight: "800", color: "#1A202C" },
   email: { fontSize: 13, color: "#718096", maxWidth: 220 },
   logoutBtn: {
@@ -167,71 +168,132 @@ export const cardStyles = StyleSheet.create({
   card: {
     flexDirection: "row",
     backgroundColor: "#FFFFFF",
-    borderRadius: 16,
-    marginBottom: 14,
+    borderRadius: 18,
+    marginBottom: 16,
     overflow: "hidden",
     borderWidth: 1,
     borderColor: "#E5E7EB",
     shadowColor: "#000",
     shadowOpacity: 0.08,
-    shadowRadius: 6,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 3,
+    shadowRadius: 7,
+    shadowOffset: { width: 0, height: 3 },
+    elevation: 4,
+    minHeight: 150,
   },
+
+  imageBox: {
+    width: 170,
+    backgroundColor: "#EAF7EF",
+  },
+
   image: {
-    width: 120,
-    height: 120,
-    backgroundColor: "#E5E7EB",
+    width: "100%",
+    height: "100%",
+    minHeight: 150,
   },
+
+  placeholderBox: {
+    flex: 1,
+    minHeight: 150,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#EAF7EF",
+  },
+
+  placeholderIcon: {
+    fontSize: 44,
+  },
+
   content: {
     flex: 1,
-    padding: 12,
-    justifyContent: "space-between",
+    paddingVertical: 18,
+    paddingHorizontal: 18,
+    justifyContent: "center",
   },
-  topRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  badge: {
-    backgroundColor: "#EEF2FF",
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 8,
-  },
-  badgeText: {
-    color: "#4F46E5",
-    fontWeight: "700",
-    fontSize: 12,
-  },
-  userId: {
-    fontSize: 12,
-    color: "#6B7280",
-    fontWeight: "600",
-  },
+
   title: {
-    fontSize: 18,
-    fontWeight: "700",
-    color: "#111827",
-    marginTop: 8,
-    marginBottom: 6,
+    fontSize: 22,
+    fontWeight: "900",
+    color: "#1F3D2B",
+    marginBottom: 5,
   },
+
+  scientific: {
+    fontSize: 16,
+    color: "#2F6F4F",
+    fontStyle: "italic",
+    marginBottom: 7,
+  },
+
   body: {
-    fontSize: 14,
-    color: "#4B5563",
+    fontSize: 15,
+    color: "#6B7280",
     lineHeight: 20,
-    marginBottom: 8,
+    marginBottom: 7,
   },
-  footer: {
-    flexDirection: "row",
-    gap: 14,
-    marginTop: 6,
+
+  location: {
+    fontSize: 13,
+    color: "#166534",
+    backgroundColor: "#ECFDF5",
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 10,
+    marginBottom: 6,
+    fontWeight: "700",
   },
-  footerText: {
+
+  meta: {
     fontSize: 13,
     color: "#374151",
     fontWeight: "600",
   },
+
+  actionsBottom: {
+    flexDirection: "row",
+    marginTop: 10,
+  },
+
+  mapMiniBtn: {
+    backgroundColor: "#DBEAFE",
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    borderRadius: 10,
+  },
+
+  mapMiniText: {
+    color: "#1D4ED8",
+    fontWeight: "800",
+    fontSize: 13,
+  },
+
+  actionsRight: {
+  width: 70,
+  justifyContent: "center",
+  alignItems: "center",
+  gap: 14,
+  zIndex: 20,
+  elevation: 20,
+},
+
+ iconBtn: {
+  width: 44,
+  height: 44,
+  borderRadius: 22,
+  backgroundColor: "#F3F4F6",
+  justifyContent: "center",
+  alignItems: "center",
+  zIndex: 30,
+  elevation: 30,
+},
+
+  editIcon: {
+  fontSize: 22,
+},
+
+deleteIcon: {
+  fontSize: 22,
+},
 });
 
 export const inputStyles = StyleSheet.create({

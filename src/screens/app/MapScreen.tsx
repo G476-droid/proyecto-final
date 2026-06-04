@@ -6,6 +6,8 @@ import {
   Platform,
   ActivityIndicator,
   ScrollView,
+  TouchableOpacity,
+  Linking,
 } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import { getMySpecies, Species } from "../../services/speciesService";
@@ -26,9 +28,14 @@ const MapScreen = () => {
   const loadSpecies = async () => {
     try {
       const data = await getMySpecies();
-      setSpecies(data);
+
+      const withLocation = data.filter(
+        (item) => item.latitude !== null && item.longitude !== null
+      );
+
+      setSpecies(withLocation);
     } catch (error) {
-      console.log("Error cargando mapa:", error);
+      console.log("Error cargando especies para mapa:", error);
     } finally {
       setLoading(false);
     }
@@ -41,11 +48,30 @@ const MapScreen = () => {
     }, [])
   );
 
+  const openGoogleMaps = (item: Species) => {
+    if (item.latitude === null || item.longitude === null) return;
+
+    const url = `https://www.google.com/maps/search/?api=1&query=${item.latitude},${item.longitude}`;
+    Linking.openURL(url);
+  };
+
   if (loading) {
     return (
       <View style={styles.center}>
-        <ActivityIndicator color="#2E7D32" size="large" />
-        <Text>Cargando mapa...</Text>
+        <ActivityIndicator size="large" color="#2E7D32" />
+        <Text style={styles.loadingText}>Cargando mapa...</Text>
+      </View>
+    );
+  }
+
+  if (species.length === 0) {
+    return (
+      <View style={styles.center}>
+        <Text style={styles.emptyTitle}>No hay ubicaciones registradas</Text>
+        <Text style={styles.emptyText}>
+          Primero registra una especie y presiona “Obtener ubicación” antes de
+          guardarla.
+        </Text>
       </View>
     );
   }
@@ -54,44 +80,52 @@ const MapScreen = () => {
     return (
       <ScrollView contentContainerStyle={styles.webContainer}>
         <Text style={styles.title}>Mapa de especies</Text>
-        <Text style={styles.text}>
-          En web se muestra la ubicación como listado. En Android se muestra el mapa real.
+        <Text style={styles.subtitle}>
+          En web se muestran las ubicaciones guardadas. Presiona una tarjeta
+          para abrir el punto real en Google Maps.
         </Text>
 
-        {species.length === 0 ? (
-          <Text>No hay especies registradas.</Text>
-        ) : (
-          species.map((item) => (
-            <View key={item.id} style={styles.card}>
-              <Text style={styles.name}>📍 {item.common_name ?? "Sin nombre"}</Text>
-              <Text>{item.description ?? "Sin descripción"}</Text>
-              <Text>
-                Latitud: {item.latitude ?? "No registrada"} | Longitud:{" "}
-                {item.longitude ?? "No registrada"}
-              </Text>
-            </View>
-          ))
-        )}
+        {species.map((item) => (
+          <TouchableOpacity
+            key={item.id}
+            style={styles.locationCard}
+            onPress={() => openGoogleMaps(item)}
+          >
+            <Text style={styles.name}>📍 {item.common_name ?? "Sin nombre"}</Text>
+
+            <Text style={styles.description} numberOfLines={2}>
+              {item.description ?? "Sin descripción"}
+            </Text>
+
+            <Text style={styles.coords}>
+              Latitud: {item.latitude}
+            </Text>
+
+            <Text style={styles.coords}>
+              Longitud: {item.longitude}
+            </Text>
+
+            <Text style={styles.openText}>Abrir en Google Maps →</Text>
+          </TouchableOpacity>
+        ))}
       </ScrollView>
     );
   }
 
-  const speciesWithLocation = species.filter(
-    (item) => item.latitude !== null && item.longitude !== null
-  );
+  const firstLocation = species[0];
 
   return (
     <View style={styles.container}>
       <MapView
         style={styles.map}
         initialRegion={{
-          latitude: speciesWithLocation[0]?.latitude ?? -0.180653,
-          longitude: speciesWithLocation[0]?.longitude ?? -78.467834,
-          latitudeDelta: 0.08,
-          longitudeDelta: 0.08,
+          latitude: firstLocation.latitude ?? -0.180653,
+          longitude: firstLocation.longitude ?? -78.467834,
+          latitudeDelta: 0.05,
+          longitudeDelta: 0.05,
         }}
       >
-        {speciesWithLocation.map((item) => (
+        {species.map((item) => (
           <Marker
             key={item.id}
             coordinate={{
@@ -119,9 +153,26 @@ const styles = StyleSheet.create({
   },
   center: {
     flex: 1,
+    backgroundColor: "#F1F8E9",
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#F1F8E9",
+    padding: 24,
+  },
+  loadingText: {
+    marginTop: 10,
+    color: "#2E7D32",
+    fontWeight: "700",
+  },
+  emptyTitle: {
+    fontSize: 22,
+    fontWeight: "800",
+    color: "#2E7D32",
+    textAlign: "center",
+  },
+  emptyText: {
+    marginTop: 8,
+    color: "#4B5563",
+    textAlign: "center",
   },
   webContainer: {
     flexGrow: 1,
@@ -130,22 +181,40 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 28,
-    fontWeight: "bold",
+    fontWeight: "800",
     color: "#2E7D32",
-    marginBottom: 10,
+    marginBottom: 6,
   },
-  text: {
+  subtitle: {
     color: "#4B5563",
-    marginBottom: 20,
+    marginBottom: 18,
   },
-  card: {
+  locationCard: {
     backgroundColor: "#FFFFFF",
+    borderRadius: 16,
     padding: 16,
-    borderRadius: 12,
-    marginBottom: 10,
+    marginBottom: 14,
+    borderWidth: 1,
+    borderColor: "#D1FAE5",
   },
   name: {
-    fontWeight: "bold",
-    marginBottom: 5,
+    fontSize: 18,
+    fontWeight: "800",
+    color: "#111827",
+    marginBottom: 6,
+  },
+  description: {
+    color: "#4B5563",
+    marginBottom: 8,
+  },
+  coords: {
+    color: "#374151",
+    fontWeight: "600",
+    marginBottom: 3,
+  },
+  openText: {
+    marginTop: 8,
+    color: "#2563EB",
+    fontWeight: "800",
   },
 });

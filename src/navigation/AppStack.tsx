@@ -37,7 +37,6 @@ const AppStack = () => {
         component={DetailScreen}
         options={{
           title: "Detalle de especie",
-          headerShown: true,
         }}
       />
 
