@@ -7,7 +7,6 @@ import {
   Alert,
   KeyboardAvoidingView,
   Platform,
-  Image,
 } from "react-native";
 import { StackScreenProps } from "@react-navigation/stack";
 import { AuthStackParamList } from "../../navigation/typeNavigation";
@@ -16,6 +15,7 @@ import { isValidEmail, isValidPassword } from "../../utils/validators";
 import { loginStyles } from "../../styles/appStyle";
 import { Input } from "../../components/ui/Input";
 import { Button } from "../../components/ui/Button";
+import { EcoScanLogo } from "../../components/ui/EcoScanLogo";
 
 type LoginScreenNavigationProp = StackScreenProps<AuthStackParamList, "Login">;
 
@@ -90,11 +90,7 @@ export const LoginScreen = ({ navigation }: LoginScreenNavigationProp) => {
           <View style={loginStyles.brandCard}>
             <View style={loginStyles.header}>
               <View style={loginStyles.logoWrap}>
-                <Image
-                  source={require("../../../assets/img/logo.png")}
-                  style={loginStyles.logo}
-                  resizeMode="contain"
-                />
+                <EcoScanLogo size={68} />
               </View>
               <Text style={loginStyles.eyebrow}>EcoScan IA</Text>
               <Text style={loginStyles.title}>Bienvenido</Text>
